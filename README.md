@@ -49,3 +49,5 @@ SplatSchedule/
 - **Schedules**: `https://splatoon3.ink/data/schedules.json`
 
 Thanks to [splatoon3.ink](https://splatoon3.ink) for the excellent public API!
+
+Not affiliated with Nintendo Co., Ltd. Splatoon™ is a registered trademark of Nintendo. All copyrights belong to their respective owners.
