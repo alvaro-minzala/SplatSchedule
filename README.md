@@ -30,6 +30,7 @@ A beautiful, Apple-native macOS app for viewing Splatoon 3 battle schedules — 
 2. Select the **SplatSchedule** scheme
 3. Press **⌘R** to build and run
 4. The app fetches live schedule data on launch — no account needed!
+
 *SplatSchedule.app coming soon!*
 
 
