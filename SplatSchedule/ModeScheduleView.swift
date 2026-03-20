@@ -75,6 +75,7 @@ struct ModeHeaderView: View {
         case .anarchyOpen: return "Casual ranked matches — team up with friends"
         case .anarchySeries: return "Competitive ranked series — fight for your rating"
         case .xBattle: return "Top-tier ranked play for the elite"
+        case .salmonRun: return "Co-op wave defense against the Salmonids"
         }
     }
 

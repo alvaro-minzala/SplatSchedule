@@ -1,28 +1,34 @@
 import SwiftUI
 
+enum NavDestination: Equatable {
+    case mode(GameMode)
+    case salmonRun
+    case about
+}
+
 struct ContentView: View {
     @StateObject private var service = ScheduleService()
-    @State private var selectedMode: GameMode = .turfWar
-    @State private var showAbout = false
+    @State private var destination: NavDestination = .mode(.turfWar)
 
     var body: some View {
         HStack(spacing: 0) {
-            // Sidebar
-            SidebarView(selectedMode: $selectedMode, showAbout: $showAbout, service: service)
+            SidebarView(destination: $destination, service: service)
                 .frame(width: 220)
 
             Divider()
 
-            // Main Content
-            if showAbout {
+            switch destination {
+            case .mode(let mode):
+                ModeScheduleView(mode: mode, service: service)
+            case .salmonRun:
+                SalmonRunView(service: service)
+            case .about:
                 AboutView()
-            } else {
-                ModeScheduleView(mode: selectedMode, service: service)
             }
         }
         .background(Color(nsColor: .windowBackgroundColor))
         .overlay(alignment: .topTrailing) {
-            if !showAbout {
+            if destination != .about {
                 StatusBar(service: service)
                     .padding(16)
             }

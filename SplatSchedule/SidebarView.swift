@@ -1,75 +1,78 @@
 import SwiftUI
 
 struct SidebarView: View {
-    @Binding var selectedMode: GameMode
-    @Binding var showAbout: Bool
+    @Binding var destination: NavDestination
     @ObservedObject var service: ScheduleService
 
     var body: some View {
         VStack(spacing: 0) {
             // App Header
-            VStack(spacing: 4) {
-                HStack(spacing: 10) {
-                    ZStack {
-                        Circle()
-                            .fill(LinearGradient(
-                                colors: [Color(hex: "#C8E645"), Color(hex: "#F54910")],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ))
-                            .frame(width: 36, height: 36)
-                        Text("🦑")
-                            .font(.system(size: 18))
-                    }
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text("Splat")
-                            .font(.system(size: 15, weight: .black, design: .rounded))
-                            .foregroundStyle(.primary)
-                        + Text("Schedule")
-                            .font(.system(size: 15, weight: .black, design: .rounded))
-                            .foregroundStyle(Color(hex: "#C8E645"))
-                        Text("v0.1a")
-                            .font(.system(size: 10, weight: .medium))
-                            .foregroundStyle(.tertiary)
-                    }
-                    Spacer()
+            HStack(spacing: 10) {
+                ZStack {
+                    Circle()
+                        .fill(LinearGradient(
+                            colors: [Color(hex: "#C8E645"), Color(hex: "#F54910")],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ))
+                        .frame(width: 36, height: 36)
+                    Text("🦑")
+                        .font(.system(size: 18))
                 }
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("Splat")
+                        .font(.system(size: 15, weight: .black, design: .rounded))
+                        .foregroundStyle(.primary)
+                    + Text("Schedule")
+                        .font(.system(size: 15, weight: .black, design: .rounded))
+                        .foregroundStyle(Color(hex: "#C8E645"))
+                    Text("v0.2")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundStyle(.tertiary)
+                }
+                Spacer()
             }
             .padding(.horizontal, 16)
             .padding(.top, 20)
             .padding(.bottom, 16)
 
-            Divider()
-                .padding(.horizontal, 12)
+            Divider().padding(.horizontal, 12)
 
             // Battle Modes
             VStack(alignment: .leading, spacing: 2) {
-                SectionLabel("BATTLE MODES")
-                    .padding(.top, 12)
-                    .padding(.bottom, 4)
+                SectionLabel("BATTLE MODES").padding(.top, 12).padding(.bottom, 4)
 
-                ForEach(GameMode.allCases) { mode in
+                ForEach(GameMode.allCases.filter { $0 != .salmonRun }) { mode in
                     SidebarRow(
                         mode: mode,
-                        isSelected: !showAbout && selectedMode == mode,
+                        isSelected: destination == .mode(mode),
                         slots: service.scheduleSlots[mode] ?? []
                     )
-                    .onTapGesture {
-                        showAbout = false
-                        selectedMode = mode
-                    }
+                    .onTapGesture { destination = .mode(mode) }
                 }
             }
             .padding(.horizontal, 8)
 
-            Divider()
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
+            Divider().padding(.horizontal, 12).padding(.vertical, 8)
+
+            // Co-op
+            VStack(alignment: .leading, spacing: 2) {
+                SectionLabel("CO-OP").padding(.bottom, 4)
+
+                SalmonSidebarRow(
+                    isSelected: destination == .salmonRun,
+                    slots: service.coopSlots
+                )
+                .onTapGesture { destination = .salmonRun }
+            }
+            .padding(.horizontal, 8)
+
+            Divider().padding(.horizontal, 12).padding(.vertical, 8)
 
             // About
             VStack(alignment: .leading, spacing: 2) {
-                AboutSidebarRow(isSelected: showAbout)
-                    .onTapGesture { showAbout = true }
+                AboutSidebarRow(isSelected: destination == .about)
+                    .onTapGesture { destination = .about }
             }
             .padding(.horizontal, 8)
 
@@ -98,9 +101,18 @@ struct SidebarRow: View {
 
     var activeSlot: ScheduleSlot? { slots.first(where: \.isActive) }
 
+    var modeEmoji: String {
+        switch mode {
+        case .turfWar: return "🎨"
+        case .anarchyOpen: return "🔥"
+        case .anarchySeries: return "🏆"
+        case .xBattle: return "⚡️"
+        case .salmonRun: return "🐻"
+        }
+    }
+
     var body: some View {
         HStack(spacing: 10) {
-            // Mode color dot
             ZStack {
                 RoundedRectangle(cornerRadius: 6)
                     .fill(Color(hex: mode.accentColor).opacity(isSelected ? 1 : 0.15))
@@ -127,7 +139,7 @@ struct SidebarRow: View {
 
             Spacer()
 
-            if let _ = activeSlot {
+            if activeSlot != nil {
                 Circle()
                     .fill(Color(hex: mode.accentColor))
                     .frame(width: 6, height: 6)
@@ -143,14 +155,57 @@ struct SidebarRow: View {
         .contentShape(Rectangle())
         .onHover { isHovered = $0 }
     }
+}
 
-    var modeEmoji: String {
-        switch mode {
-        case .turfWar: return "🎨"
-        case .anarchyOpen: return "🔥"
-        case .anarchySeries: return "🏆"
-        case .xBattle: return "⚡️"
+struct SalmonSidebarRow: View {
+    let isSelected: Bool
+    let slots: [CoopSlot]
+    @State private var isHovered = false
+
+    var activeSlot: CoopSlot? { slots.first(where: \.isActive) }
+    let accentColor = Color(hex: "#FF6B1A")
+
+    var body: some View {
+        HStack(spacing: 10) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(accentColor.opacity(isSelected ? 1 : 0.15))
+                    .frame(width: 28, height: 28)
+                Text("🐻")
+                    .font(.system(size: 14))
+            }
+
+            VStack(alignment: .leading, spacing: 1) {
+                Text("Salmon Run")
+                    .font(.system(size: 13, weight: isSelected ? .semibold : .regular))
+                    .foregroundStyle(isSelected ? .primary : .secondary)
+
+                if let active = activeSlot {
+                    Text(active.stageName)
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundStyle(accentColor)
+                } else if let next = slots.first {
+                    Text(next.stageName)
+                        .font(.system(size: 10))
+                        .foregroundStyle(.quaternary)
+                }
+            }
+
+            Spacer()
+
+            if activeSlot != nil {
+                Circle().fill(accentColor).frame(width: 6, height: 6)
+            }
         }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 7)
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(isSelected ? accentColor.opacity(0.1) :
+                      isHovered ? Color.primary.opacity(0.04) : Color.clear)
+        )
+        .contentShape(Rectangle())
+        .onHover { isHovered = $0 }
     }
 }
 

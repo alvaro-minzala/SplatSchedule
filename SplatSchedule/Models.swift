@@ -11,6 +11,42 @@ struct SchedulesData: Codable {
     let bankaraSchedules: NodeList<BankaraSchedule>
     let xSchedules: NodeList<XSchedule>
     let festSchedules: NodeList<FestSchedule>?
+    let coopGroupingSchedule: CoopGroupingSchedule?
+}
+
+// MARK: - Coop (Salmon Run — from schedules.json)
+
+struct CoopGroupingSchedule: Codable {
+    let regularSchedules: NodeList<CoopSchedule>?
+    let bigRunSchedules: NodeList<CoopSchedule>?
+    let teamContestSchedules: NodeList<CoopSchedule>?
+}
+
+struct CoopSchedule: Codable, Identifiable {
+    var id: String { startTime }
+    let startTime: String
+    let endTime: String
+    let setting: CoopSetting?
+}
+
+struct CoopSetting: Codable {
+    let coopStage: CoopStage
+    let weapons: [CoopWeapon]
+    let boss: CoopBoss?
+}
+
+struct CoopStage: Codable {
+    let name: String
+    let image: SplatImage
+}
+
+struct CoopWeapon: Codable {
+    let name: String
+    let image: SplatImage
+}
+
+struct CoopBoss: Codable {
+    let name: String
 }
 
 struct NodeList<T: Codable>: Codable {
@@ -100,6 +136,7 @@ enum GameMode: String, CaseIterable, Identifiable {
     case anarchyOpen = "Anarchy Open"
     case anarchySeries = "Anarchy Series"
     case xBattle = "X Battle"
+    case salmonRun = "Salmon Run"
 
     var id: String { rawValue }
 
@@ -109,6 +146,7 @@ enum GameMode: String, CaseIterable, Identifiable {
         case .anarchyOpen: return "#F54910"
         case .anarchySeries: return "#F54910"
         case .xBattle: return "#0FDB9B"
+        case .salmonRun: return "#FF6B1A"
         }
     }
 }
@@ -124,6 +162,28 @@ struct ScheduleSlot: Identifiable {
         let now = Date()
         return now >= startTime && now < endTime
     }
+}
+
+struct CoopSlot: Identifiable {
+    let id = UUID()
+    let startTime: Date
+    let endTime: Date
+    let stageName: String
+    let stageImageURL: String
+    let weapons: [String]
+    let weaponImageURLs: [String]
+    let bossName: String?
+    let coopMode: CoopMode
+    var isActive: Bool {
+        let now = Date()
+        return now >= startTime && now < endTime
+    }
+}
+
+enum CoopMode: String {
+    case regular = "Salmon Run"
+    case bigRun = "Big Run"
+    case eggstraWork = "Eggstra Work"
 }
 
 
