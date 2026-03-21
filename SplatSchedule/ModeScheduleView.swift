@@ -10,13 +10,11 @@ struct ModeScheduleView: View {
 
     var activeSlot: ScheduleSlot? { slots.first(where: \.isActive) }
     var upcomingSlots: [ScheduleSlot] { slots.filter { !$0.isActive } }
-
     var accentColor: Color { Color(hex: mode.accentColor) }
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                // Header
                 ModeHeaderView(mode: mode, accentColor: accentColor, slotCount: slots.count)
 
                 if service.isLoading && slots.isEmpty {
@@ -25,27 +23,23 @@ struct ModeScheduleView: View {
                     EmptyStateView(mode: mode)
                 } else {
                     VStack(spacing: 20) {
-                        // Active Now
                         if let active = activeSlot {
                             VStack(alignment: .leading, spacing: 10) {
                                 Label("Now Playing", systemImage: "play.circle.fill")
                                     .font(.system(size: 12, weight: .semibold))
                                     .foregroundStyle(accentColor)
                                     .padding(.horizontal, 24)
-
                                 ActiveSlotCard(slot: active, accentColor: accentColor)
                                     .padding(.horizontal, 20)
                             }
                         }
 
-                        // Upcoming
                         if !upcomingSlots.isEmpty {
                             VStack(alignment: .leading, spacing: 10) {
                                 Label("Upcoming Rotations", systemImage: "clock")
                                     .font(.system(size: 12, weight: .semibold))
                                     .foregroundStyle(.secondary)
                                     .padding(.horizontal, 24)
-
                                 LazyVStack(spacing: 10) {
                                     ForEach(upcomingSlots) { slot in
                                         ScheduleSlotRow(slot: slot, accentColor: accentColor)
@@ -59,7 +53,7 @@ struct ModeScheduleView: View {
                 }
             }
         }
-        .background(Color(nsColor: .windowBackgroundColor))
+        .background(Color.platformBackground)
         .animation(.easeInOut(duration: 0.25), value: mode)
     }
 }
@@ -71,17 +65,16 @@ struct ModeHeaderView: View {
 
     var modeDescription: String {
         switch mode {
-        case .turfWar: return "Paint the most turf to win!"
-        case .anarchyOpen: return "Casual ranked matches — team up with friends"
-        case .anarchySeries: return "Competitive ranked series — fight for your rating"
-        case .xBattle: return "Top-tier ranked play for the elite"
-        case .salmonRun: return "Co-op wave defense against the Salmonids"
+        case .turfWar:      return "Paint the most turf to win!"
+        case .anarchyOpen:  return "Casual ranked matches — team up with friends"
+        case .anarchySeries:return "Competitive ranked series — fight for your rating"
+        case .xBattle:      return "Top-tier ranked play for the elite"
+        case .salmonRun:    return "Co-op wave defense against the Salmonids"
         }
     }
 
     var body: some View {
         ZStack(alignment: .bottomLeading) {
-            // Background gradient
             Rectangle()
                 .fill(LinearGradient(
                     colors: [accentColor.opacity(0.15), accentColor.opacity(0.03)],
@@ -90,23 +83,14 @@ struct ModeHeaderView: View {
                 ))
                 .frame(height: 130)
 
-            // Decorative circles
-            Circle()
-                .fill(accentColor.opacity(0.08))
-                .frame(width: 200, height: 200)
-                .offset(x: 400, y: 20)
-
-            Circle()
-                .fill(accentColor.opacity(0.05))
-                .frame(width: 120, height: 120)
-                .offset(x: 500, y: -30)
+            Circle().fill(accentColor.opacity(0.08)).frame(width: 200, height: 200).offset(x: 400, y: 20)
+            Circle().fill(accentColor.opacity(0.05)).frame(width: 120, height: 120).offset(x: 500, y: -30)
 
             VStack(alignment: .leading, spacing: 6) {
                 HStack(alignment: .center, spacing: 12) {
                     Text(mode.rawValue)
                         .font(.system(size: 28, weight: .black, design: .rounded))
                         .foregroundStyle(.primary)
-
                     Text("\(slotCount) rotations")
                         .font(.system(size: 11, weight: .semibold))
                         .foregroundStyle(accentColor)
@@ -114,7 +98,6 @@ struct ModeHeaderView: View {
                         .padding(.vertical, 3)
                         .background(accentColor.opacity(0.12), in: Capsule())
                 }
-
                 Text(modeDescription)
                     .font(.system(size: 13))
                     .foregroundStyle(.secondary)
@@ -128,15 +111,13 @@ struct ModeHeaderView: View {
 struct ActiveSlotCard: View {
     let slot: ScheduleSlot
     let accentColor: Color
+    @Environment(\.horizontalSizeClass) private var hSizeClass
 
     var body: some View {
         VStack(spacing: 0) {
-            // Rule badge + timer
             HStack {
                 HStack(spacing: 6) {
-                    Circle()
-                        .fill(accentColor)
-                        .frame(width: 8, height: 8)
+                    Circle().fill(accentColor).frame(width: 8, height: 8)
                     Text(slot.ruleName)
                         .font(.system(size: 13, weight: .bold))
                         .foregroundStyle(accentColor)
@@ -148,22 +129,27 @@ struct ActiveSlotCard: View {
             .padding(.top, 14)
             .padding(.bottom, 12)
 
-            Divider()
-                .padding(.horizontal, 16)
+            Divider().padding(.horizontal, 16)
 
-            // Stages
-            HStack(spacing: 12) {
-                ForEach(slot.stages) { stage in
-                    StageCard(stage: stage, size: .large)
+            // iPhone: stacked; iPad/Mac: side by side
+            if hSizeClass == .compact {
+                VStack(spacing: 10) {
+                    ForEach(slot.stages) { stage in
+                        StageCard(stage: stage, size: .large)
+                    }
                 }
+                .padding(16)
+            } else {
+                HStack(spacing: 12) {
+                    ForEach(slot.stages) { stage in
+                        StageCard(stage: stage, size: .large)
+                    }
+                }
+                .padding(16)
             }
-            .padding(16)
         }
         .background(accentColor.opacity(0.06), in: RoundedRectangle(cornerRadius: 14))
-        .overlay(
-            RoundedRectangle(cornerRadius: 14)
-                .strokeBorder(accentColor.opacity(0.25), lineWidth: 1.5)
-        )
+        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(accentColor.opacity(0.25), lineWidth: 1.5))
     }
 }
 
@@ -171,10 +157,10 @@ struct ScheduleSlotRow: View {
     let slot: ScheduleSlot
     let accentColor: Color
     @State private var isExpanded = false
+    @Environment(\.horizontalSizeClass) private var hSizeClass
 
     var body: some View {
         VStack(spacing: 0) {
-            // Header
             HStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(slot.ruleName)
@@ -184,10 +170,7 @@ struct ScheduleSlotRow: View {
                         .font(.system(size: 11, weight: .medium))
                         .foregroundStyle(.tertiary)
                 }
-
                 Spacer()
-
-                // Stage names preview
                 if !isExpanded {
                     HStack(spacing: 4) {
                         ForEach(slot.stages) { stage in
@@ -197,10 +180,10 @@ struct ScheduleSlotRow: View {
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 2)
                                 .background(Color.primary.opacity(0.05), in: Capsule())
+                                .lineLimit(1)
                         }
                     }
                 }
-
                 Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
                     .font(.system(size: 10, weight: .semibold))
                     .foregroundStyle(.tertiary)
@@ -213,31 +196,37 @@ struct ScheduleSlotRow: View {
             if isExpanded {
                 Divider().padding(.horizontal, 16)
 
-                HStack(spacing: 10) {
-                    ForEach(slot.stages) { stage in
-                        StageCard(stage: stage, size: .medium)
+                // iPhone: stacked; iPad/Mac: side by side
+                if hSizeClass == .compact {
+                    VStack(spacing: 10) {
+                        ForEach(slot.stages) { stage in
+                            StageCard(stage: stage, size: .medium)
+                        }
                     }
+                    .padding(14)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+                } else {
+                    HStack(spacing: 10) {
+                        ForEach(slot.stages) { stage in
+                            StageCard(stage: stage, size: .medium)
+                        }
+                    }
+                    .padding(14)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
                 }
-                .padding(14)
-                .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
-        .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 12))
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .strokeBorder(Color.primary.opacity(0.06), lineWidth: 1)
-        )
+        .background(Color.platformControlBackground, in: RoundedRectangle(cornerRadius: 12))
+        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.primary.opacity(0.06), lineWidth: 1))
     }
 
     func timeRange(_ start: Date, _ end: Date) -> String {
         let f = DateFormatter()
         f.dateStyle = .none
         f.timeStyle = .short
-        let startStr = f.string(from: start)
-        let endStr = f.string(from: end)
         let df = DateFormatter()
         df.dateFormat = "EEE MMM d"
-        return "\(df.string(from: start))  ·  \(startStr) – \(endStr)"
+        return "\(df.string(from: start))  ·  \(f.string(from: start)) – \(f.string(from: end))"
     }
 }
 
@@ -246,15 +235,13 @@ enum StageSize { case large, medium }
 struct StageCard: View {
     let stage: VsStage
     let size: StageSize
-
     var cardHeight: CGFloat { size == .large ? 120 : 90 }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             AsyncImage(url: URL(string: stage.image.url)) { phase in
                 switch phase {
-                case .success(let img):
-                    img.resizable().aspectRatio(contentMode: .fill)
+                case .success(let img): img.resizable().aspectRatio(contentMode: .fill)
                 case .failure:
                     Rectangle().fill(Color.gray.opacity(0.3))
                         .overlay(Image(systemName: "photo").foregroundStyle(.quaternary))
@@ -263,6 +250,7 @@ struct StageCard: View {
                         .overlay(ProgressView().scaleEffect(0.6))
                 }
             }
+            .frame(maxWidth: .infinity)
             .frame(height: cardHeight)
             .clipShape(RoundedRectangle(cornerRadius: 8))
 
@@ -278,13 +266,11 @@ struct StageCard: View {
 struct TimeRemainingView: View {
     let endTime: Date
     @State private var timeRemaining: String = ""
-
     let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     var body: some View {
         HStack(spacing: 4) {
-            Image(systemName: "timer")
-                .font(.system(size: 10))
+            Image(systemName: "timer").font(.system(size: 10))
             Text(timeRemaining)
                 .font(.system(size: 11, weight: .semibold, design: .monospaced))
         }
@@ -307,9 +293,7 @@ struct LoadingView: View {
     var body: some View {
         VStack(spacing: 16) {
             ProgressView()
-            Text("Loading schedules…")
-                .font(.system(size: 13))
-                .foregroundStyle(.secondary)
+            Text("Loading schedules…").font(.system(size: 13)).foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)
         .padding(.top, 80)
@@ -320,17 +304,29 @@ struct EmptyStateView: View {
     let mode: GameMode
     var body: some View {
         VStack(spacing: 12) {
-            Image(systemName: "calendar.badge.exclamationmark")
-                .font(.system(size: 36))
-                .foregroundStyle(.quaternary)
-            Text("No \(mode.rawValue) rotations available")
-                .font(.system(size: 15, weight: .medium))
-                .foregroundStyle(.secondary)
-            Text("Check back later or try refreshing")
-                .font(.system(size: 12))
-                .foregroundStyle(.tertiary)
+            Image(systemName: "calendar.badge.exclamationmark").font(.system(size: 36)).foregroundStyle(.quaternary)
+            Text("No \(mode.rawValue) rotations available").font(.system(size: 15, weight: .medium)).foregroundStyle(.secondary)
+            Text("Check back later or try refreshing").font(.system(size: 12)).foregroundStyle(.tertiary)
         }
         .frame(maxWidth: .infinity)
         .padding(.top, 80)
+    }
+}
+
+// MARK: - Cross-platform color helpers
+extension Color {
+    static var platformBackground: Color {
+        #if os(macOS)
+        Color(nsColor: .windowBackgroundColor)
+        #else
+        Color(uiColor: .systemBackground)
+        #endif
+    }
+    static var platformControlBackground: Color {
+        #if os(macOS)
+        Color(nsColor: .controlBackgroundColor)
+        #else
+        Color(uiColor: .secondarySystemBackground)
+        #endif
     }
 }

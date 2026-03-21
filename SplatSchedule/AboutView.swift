@@ -35,7 +35,7 @@ struct AboutView: View {
                 VStack(alignment: .leading, spacing: 20) {
                     // ── YOUR CONTENT GOES HERE ──────────────────────────────
                     // Example placeholder:
-                    Text("Made by Álvaro Minzala(@thezarufox on X) as a way to check Splatoon 3 rotations quickly on the computer")
+                    Text("Made by Álvaro Minzala(@thezarufox on X) as a way to check Splatoon 3 rotations quickly on the computer and iOS devices.")
                         .font(.system(size: 15))
                         .foregroundStyle(.secondary)
                     Text("Not affiliated with Nintendo Co., Ltd.")

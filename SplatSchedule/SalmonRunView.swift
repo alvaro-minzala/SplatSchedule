@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SalmonRunView: View {
     @ObservedObject var service: ScheduleService
+    @Environment(\.horizontalSizeClass) private var hSizeClass
 
     var activeSlot: CoopSlot? { service.coopSlots.first(where: \.isActive) }
     var upcomingSlots: [CoopSlot] { service.coopSlots.filter { !$0.isActive } }
@@ -29,7 +30,6 @@ struct SalmonRunView: View {
                         HStack(spacing: 12) {
                             Text("Salmon Run")
                                 .font(.system(size: 28, weight: .black, design: .rounded))
-
                             Text("\(service.coopSlots.count) rotations")
                                 .font(.system(size: 11, weight: .semibold))
                                 .foregroundStyle(accentColor)
@@ -60,27 +60,23 @@ struct SalmonRunView: View {
                     .padding(.top, 80)
                 } else {
                     VStack(spacing: 20) {
-                        // Active
                         if let active = activeSlot {
                             VStack(alignment: .leading, spacing: 10) {
                                 Label("Now Running", systemImage: "play.circle.fill")
                                     .font(.system(size: 12, weight: .semibold))
                                     .foregroundStyle(accentColor)
                                     .padding(.horizontal, 24)
-
                                 ActiveCoopCard(slot: active, accentColor: accentColor)
                                     .padding(.horizontal, 20)
                             }
                         }
 
-                        // Upcoming
                         if !upcomingSlots.isEmpty {
                             VStack(alignment: .leading, spacing: 10) {
                                 Label("Upcoming Rotations", systemImage: "clock")
                                     .font(.system(size: 12, weight: .semibold))
                                     .foregroundStyle(.secondary)
                                     .padding(.horizontal, 24)
-
                                 ForEach(upcomingSlots) { slot in
                                     CoopSlotRow(slot: slot, accentColor: accentColor)
                                         .padding(.horizontal, 20)
@@ -92,13 +88,14 @@ struct SalmonRunView: View {
                 }
             }
         }
-        .background(Color(nsColor: .windowBackgroundColor))
+        .background(Color.platformBackground)
     }
 }
 
 struct ActiveCoopCard: View {
     let slot: CoopSlot
     let accentColor: Color
+    @Environment(\.horizontalSizeClass) private var hSizeClass
 
     var body: some View {
         VStack(spacing: 0) {
@@ -125,42 +122,69 @@ struct ActiveCoopCard: View {
 
             Divider().padding(.horizontal, 16)
 
-            HStack(spacing: 16) {
-                // Stage
-                VStack(alignment: .leading, spacing: 6) {
-                    AsyncImage(url: URL(string: slot.stageImageURL)) { phase in
-                        switch phase {
-                        case .success(let img): img.resizable().aspectRatio(contentMode: .fill)
-                        default: Rectangle().fill(Color.gray.opacity(0.2))
-                        }
-                    }
-                    .frame(height: 110)
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-
-                    Text(slot.stageName)
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(.secondary)
+            // iPhone: stacked layout; iPad/Mac: side-by-side
+            if hSizeClass == .compact {
+                VStack(alignment: .leading, spacing: 12) {
+                    CoopStageImage(url: slot.stageImageURL, name: slot.stageName, height: 160)
+                    CoopWeaponsGrid(weapons: slot.weapons, urls: slot.weaponImageURLs)
                 }
-                .frame(maxWidth: .infinity)
-
-                // Weapons
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("WEAPONS")
-                        .font(.system(size: 10, weight: .semibold))
-                        .foregroundStyle(.tertiary)
-
-                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
-                        ForEach(Array(zip(slot.weapons, slot.weaponImageURLs).prefix(4)), id: \.0) { name, url in
-                            WeaponBadge(name: name, imageURL: url)
-                        }
+                .padding(16)
+            } else {
+                HStack(alignment: .top, spacing: 16) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        CoopStageImage(url: slot.stageImageURL, name: slot.stageName, height: 110)
                     }
+                    .frame(maxWidth: .infinity)
+                    CoopWeaponsGrid(weapons: slot.weapons, urls: slot.weaponImageURLs)
+                        .frame(maxWidth: .infinity)
                 }
-                .frame(maxWidth: .infinity)
+                .padding(16)
             }
-            .padding(16)
         }
         .background(accentColor.opacity(0.06), in: RoundedRectangle(cornerRadius: 14))
         .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(accentColor.opacity(0.25), lineWidth: 1.5))
+    }
+}
+
+struct CoopStageImage: View {
+    let url: String
+    let name: String
+    let height: CGFloat
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            AsyncImage(url: URL(string: url)) { phase in
+                switch phase {
+                case .success(let img): img.resizable().aspectRatio(contentMode: .fill)
+                default: Rectangle().fill(Color.gray.opacity(0.2))
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: height)
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+
+            Text(name)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(.secondary)
+        }
+    }
+}
+
+struct CoopWeaponsGrid: View {
+    let weapons: [String]
+    let urls: [String]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("WEAPONS")
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundStyle(.tertiary)
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
+                ForEach(Array(zip(weapons, urls).prefix(4)), id: \.0) { name, url in
+                    WeaponBadge(name: name, imageURL: url)
+                }
+            }
+        }
     }
 }
 
@@ -193,6 +217,7 @@ struct CoopSlotRow: View {
     let slot: CoopSlot
     let accentColor: Color
     @State private var isExpanded = false
+    @Environment(\.horizontalSizeClass) private var hSizeClass
 
     var body: some View {
         VStack(spacing: 0) {
@@ -223,6 +248,7 @@ struct CoopSlotRow: View {
                         .padding(.horizontal, 6)
                         .padding(.vertical, 2)
                         .background(Color.primary.opacity(0.05), in: Capsule())
+                        .lineLimit(1)
                 }
 
                 Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
@@ -237,51 +263,41 @@ struct CoopSlotRow: View {
             if isExpanded {
                 Divider().padding(.horizontal, 16)
 
-                HStack(spacing: 16) {
-                    VStack(alignment: .leading, spacing: 6) {
-                        AsyncImage(url: URL(string: slot.stageImageURL)) { phase in
-                            switch phase {
-                            case .success(let img): img.resizable().aspectRatio(contentMode: .fill)
-                            default: Rectangle().fill(Color.gray.opacity(0.2))
-                            }
-                        }
-                        .frame(height: 80)
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
-
-                        Text(slot.stageName)
-                            .font(.system(size: 11, weight: .semibold))
-                            .foregroundStyle(.secondary)
-
+                // iPhone: stacked; iPad/Mac: side by side
+                if hSizeClass == .compact {
+                    VStack(alignment: .leading, spacing: 12) {
+                        CoopStageImage(url: slot.stageImageURL, name: slot.stageName, height: 140)
                         if let boss = slot.bossName {
                             HStack(spacing: 4) {
-                                Image(systemName: "crown.fill")
-                                    .font(.system(size: 9))
-                                    .foregroundStyle(accentColor)
-                                Text(boss)
-                                    .font(.system(size: 10, weight: .medium))
-                                    .foregroundStyle(.secondary)
+                                Image(systemName: "crown.fill").font(.system(size: 9)).foregroundStyle(accentColor)
+                                Text(boss).font(.system(size: 10, weight: .medium)).foregroundStyle(.secondary)
                             }
                         }
+                        CoopWeaponsGrid(weapons: slot.weapons, urls: slot.weaponImageURLs)
                     }
-                    .frame(maxWidth: .infinity)
-
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("WEAPONS")
-                            .font(.system(size: 10, weight: .semibold))
-                            .foregroundStyle(.tertiary)
-                        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 6) {
-                            ForEach(Array(zip(slot.weapons, slot.weaponImageURLs).prefix(4)), id: \.0) { name, url in
-                                WeaponBadge(name: name, imageURL: url)
+                    .padding(14)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+                } else {
+                    HStack(alignment: .top, spacing: 16) {
+                        VStack(alignment: .leading, spacing: 6) {
+                            CoopStageImage(url: slot.stageImageURL, name: slot.stageName, height: 80)
+                            if let boss = slot.bossName {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "crown.fill").font(.system(size: 9)).foregroundStyle(accentColor)
+                                    Text(boss).font(.system(size: 10, weight: .medium)).foregroundStyle(.secondary)
+                                }
                             }
                         }
+                        .frame(maxWidth: .infinity)
+                        CoopWeaponsGrid(weapons: slot.weapons, urls: slot.weaponImageURLs)
+                            .frame(maxWidth: .infinity)
                     }
-                    .frame(maxWidth: .infinity)
+                    .padding(14)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
                 }
-                .padding(14)
-                .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
-        .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 12))
+        .background(Color.platformControlBackground, in: RoundedRectangle(cornerRadius: 12))
         .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.primary.opacity(0.06), lineWidth: 1))
     }
 

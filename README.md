@@ -16,7 +16,7 @@ A beautiful, Apple-native macOS app for viewing Splatoon 3 battle schedules — 
 
 - ~~Salmon Run rotation support (coming when I, or anyone forking this, can fix it)~~ Salmon run support added in v0.2 ✅
 - Siri integration (???)
-- iOS, iPadOS and watchOS support (coming in the very far future)
+- iOS support that isn't absolutely broken (it is currently broken due to scaling issues)
 
 
 ## Requirements

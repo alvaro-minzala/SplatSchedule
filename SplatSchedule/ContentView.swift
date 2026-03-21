@@ -1,73 +1,60 @@
 import SwiftUI
 
-enum NavDestination: Equatable {
-    case mode(GameMode)
-    case salmonRun
-    case about
-}
+// MARK: - Entry point — routes to platform-specific root
 
 struct ContentView: View {
+    var body: some View {
+        #if os(macOS)
+        macOSRoot
+        #else
+        iOS_RootView()
+        #endif
+    }
+
+    #if os(macOS)
     @StateObject private var service = ScheduleService()
     @State private var destination: NavDestination = .mode(.turfWar)
 
-    var body: some View {
+    var macOSRoot: some View {
         HStack(spacing: 0) {
             SidebarView(destination: $destination, service: service)
                 .frame(width: 220)
-
             Divider()
-
-            switch destination {
-            case .mode(let mode):
-                ModeScheduleView(mode: mode, service: service)
-            case .salmonRun:
-                SalmonRunView(service: service)
-            case .about:
-                AboutView()
-            }
+            macOSDestination
         }
         .background(Color(nsColor: .windowBackgroundColor))
         .overlay(alignment: .topTrailing) {
             if destination != .about {
-                StatusBar(service: service)
-                    .padding(16)
+                macOSStatusBar.padding(16)
             }
         }
     }
-}
 
-struct StatusBar: View {
-    @ObservedObject var service: ScheduleService
+    @ViewBuilder
+    var macOSDestination: some View {
+        switch destination {
+        case .mode(let mode): ModeScheduleView(mode: mode, service: service)
+        case .salmonRun:      SalmonRunView(service: service)
+        case .about:          AboutView()
+        }
+    }
 
-    var body: some View {
-        HStack(spacing: 8) {
+    var macOSStatusBar: some View {
+        HStack(spacing: 6) {
             if service.isLoading {
-                ProgressView()
-                    .scaleEffect(0.6)
-                    .frame(width: 14, height: 14)
-                Text("Updating...")
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(.secondary)
-            } else if let updated = service.lastUpdated {
-                Image(systemName: "checkmark.circle.fill")
-                    .foregroundStyle(.green)
-                    .font(.system(size: 11))
-                Text("Updated \(updated, style: .relative) ago")
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(.secondary)
+                ProgressView().scaleEffect(0.6).frame(width: 14, height: 14)
+            } else if service.lastUpdated != nil {
+                Image(systemName: "checkmark.circle.fill").foregroundStyle(.green).font(.system(size: 11))
             }
-
-            Button {
-                Task { await service.fetchAll() }
-            } label: {
-                Image(systemName: "arrow.clockwise")
-                    .font(.system(size: 11, weight: .semibold))
+            Button { Task { await service.fetchAll() } } label: {
+                Image(systemName: "arrow.clockwise").font(.system(size: 11, weight: .semibold))
             }
             .buttonStyle(.plain)
             .foregroundStyle(.secondary)
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 6)
+        .padding(.horizontal, 10).padding(.vertical, 6)
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
     }
+    #endif
 }
+
