@@ -2,8 +2,6 @@
 
 A beautiful, Apple-native macOS app for viewing Splatoon 3 battle schedules — built with SwiftUI.
 
-### Warning! Current codebase will be deprecated and rebuilt starting with version 1.0(coming soon!)
-
 ## Features
 
 - **All Battle Modes** — Turf War, Anarchy Open, Anarchy Series, X Battle
