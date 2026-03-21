@@ -16,7 +16,7 @@ struct SidebarView: View {
                             endPoint: .bottomTrailing
                         ))
                         .frame(width: 36, height: 36)
-                    Text("🦑")
+                    Image(systemName: "gamecontroller.fill")
                         .font(.system(size: 18))
                 }
                 VStack(alignment: .leading, spacing: 1) {
@@ -103,11 +103,11 @@ struct SidebarRow: View {
 
     var modeEmoji: String {
         switch mode {
-        case .turfWar: return "🎨"
-        case .anarchyOpen: return "🔥"
-        case .anarchySeries: return "🏆"
-        case .xBattle: return "⚡️"
-        case .salmonRun: return "🐻"
+        case .turfWar: return "paintbrush.fill"
+        case .anarchyOpen: return "flame.fill"
+        case .anarchySeries: return "trophy.fill"
+        case .xBattle: return "bolt.fill"
+        case .salmonRun: return "fish.fill"
         }
     }
 
@@ -117,7 +117,7 @@ struct SidebarRow: View {
                 RoundedRectangle(cornerRadius: 6)
                     .fill(Color(hex: mode.accentColor).opacity(isSelected ? 1 : 0.15))
                     .frame(width: 28, height: 28)
-                Text(modeEmoji)
+                Image(systemName: modeEmoji)
                     .font(.system(size: 14))
             }
 
@@ -171,7 +171,7 @@ struct SalmonSidebarRow: View {
                 RoundedRectangle(cornerRadius: 6)
                     .fill(accentColor.opacity(isSelected ? 1 : 0.15))
                     .frame(width: 28, height: 28)
-                Text("🐻")
+                Image(systemName: "fish.fill")
                     .font(.system(size: 14))
             }
 
@@ -219,7 +219,7 @@ struct AboutSidebarRow: View {
                 RoundedRectangle(cornerRadius: 6)
                     .fill(Color.secondary.opacity(isSelected ? 0.3 : 0.1))
                     .frame(width: 28, height: 28)
-                Text("🦊")
+                Image(systemName: "info.circle.fill")
                     .font(.system(size: 14))
                     .foregroundStyle(.secondary)
             }
